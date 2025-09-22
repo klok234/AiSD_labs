@@ -11,6 +11,8 @@ class Vector {
     size_t _dimension;
     T* _coordinates;
 
+    static double epsilon = 0.001;
+
 public:
     Vector() = delete;
 
@@ -46,10 +48,18 @@ public:
 
     T operator[](const size_t pos) const
     {
+        if (pos >= _dimension)
+        {
+            throw std::range_error("Index out of range");
+        }
         return _coordinates[pos];
     }
     T& operator[](const size_t pos)
     {
+        if (pos >= _dimension)
+        {
+            throw std::range_error("Index out of range");
+        }
         return _coordinates[pos];
     }
 
@@ -100,7 +110,12 @@ public:
 
     double length() const
     {
-        // Длина вектора
+        double len = 0.0;
+        for (size_t i = 0; i < _dimension; i++)
+        {
+            len += _coordinates[i] * _coordinates[i];
+        }
+        return sqrt(len);
     }
 
     double operator*(const Vector<T>& rhs) const
@@ -148,8 +163,86 @@ public:
         new_vec *= a;
         return new_vec;
     }
+
     friend Vector<T> operator*(T a, const Vector<T>& vec);
 
+    bool operator>(const Vector<T>& rhs)
+    {
+        if (_dimension != rhs._dimension)
+        {
+            return false;
+        }
+        for (size_t i = 0; i < _dimension; i++)
+        {
+            double difference = _coordinates[i] - rhs._coordinates[i];
+            if (abs(difference) < epsilon)
+            {
+                return false;
+            }
+            else if (difference < 0)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    bool operator<(const Vector<T>& rhs)
+    {
+        if (_dimension != rhs._dimension)
+        {
+            return false;
+        }
+        for (size_t i = 0; i < _dimension; i++)
+        {
+            double difference = _coordinates[i] - rhs._coordinates[i];
+            if (abs(difference) < epsilon)
+            {
+                return false;
+            }
+            else if (difference > 0)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    bool operator==(const Vector<T>& rhs)
+    {
+        if (_dimension != rhs._dimension || *this < rhs || *this > rhs)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    bool operator>=(const Vector<T>& rhs)
+    {
+        if (_dimension != rhs._dimension || *this < rhs)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    bool operator<=(const Vector<T>& rhs)
+    {
+        if (_dimension != rhs._dimension || *this > rhs)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    bool operator!=(const Vector<T>& rhs)
+    {
+        if (_dimension != rhs._dimension || !(*this == rhs))
+        {
+            return true;
+        }
+        return false;
+    }
     ~Vector()
     {
         delete[] _coordinates;
