@@ -3,15 +3,16 @@
 
 #include <iostream>
 #include <random>
+#include <complex>
 #include <exception>
 
+#define IS_COMPLEX($a) (std::is_same_v<$a, std::complex<float> > || std::is_same_v<$a, std::complex<double> >)
 
 template <class T>
 class Vector {
     size_t _dimension;
     T* _coordinates;
-
-    static double epsilon = 0.001;
+    inline static const double epsilon = 0.001;
 
 public:
     Vector() = delete;
@@ -35,15 +36,15 @@ public:
         }
     }
 
-    Vector(size_t dimention, T* start_rand, T* end_rand)
+    Vector(size_t dimention, int start_rand, int end_rand);
+    Vector(size_t dimention, float start_rand, float end_rand);
+    Vector(size_t dimention, double start_rand, double end_rand);
+    Vector(size_t dimention, std::complex<float> start_rand, std::complex<float> end_rand);
+    Vector(size_t dimention, std::complex<double> start_rand, std::complex<double> end_rand);
+
+    size_t dimension() const
     {
-        // ???
-        //random_device engine;
-        //uniform_int_distribution distribution(min(start_rand, end_rand), max(start_rand, end_rand));
-        //for (size_t i = 0; i < vec.size(); i++)
-        //{
-        //    vec[i] = distribution(engine);
-        //}
+        return _dimension;
     }
 
     T operator[](const size_t pos) const
@@ -65,18 +66,19 @@ public:
 
     Vector<T>& operator=(const Vector<T>& rhs)
     {
-        return Vector<T>(rhs);
+        Vector<T> new_vec = Vector<T>(rhs);
+        return new_vec;
     }
 
     Vector<T>& operator+=(const Vector<T>& rhs)
     {
-        if (_dimension != rhs->_dimension)
+        if (_dimension != rhs._dimension)
         {
             throw std::length_error("The dimensions are not equal");
         }
         for (size_t i = 0; i < _dimension; i++)
         {
-            _coordinates[i] += rhs->_coordinates[i];
+            _coordinates[i] += rhs._coordinates[i];
         }
         return *this;
     }
@@ -90,13 +92,13 @@ public:
 
     Vector<T>& operator-=(const Vector<T>& rhs)
     {
-        if (_dimension != rhs->_dimension)
+        if (_dimension != rhs._dimension)
         {
             throw std::length_error("The dimensions are not equal");
         }
         for (size_t i = 0; i < _dimension; i++)
         {
-            _coordinates[i] -= rhs->_coordinates[i];
+            _coordinates[i] -= rhs._coordinates[i];
         }
         return *this;
     }
@@ -110,12 +112,35 @@ public:
 
     double length() const
     {
-        double len = 0.0;
-        for (size_t i = 0; i < _dimension; i++)
+        if  (std::is_same_v<T, std::complex<float> >)
         {
-            len += _coordinates[i] * _coordinates[i];
+            std::complex<float> len = std::complex<float>(0,0);
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                len += _coordinates[i] * std::conj(_coordinates[i]);
+            }
+            return sqrt(len.real());
+
         }
-        return sqrt(len);
+        if  (std::is_same_v<T, std::complex<double> >)
+        {
+            std::complex<double> len = std::complex<double>(0,0);
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                len += _coordinates[i] * std::conj(_coordinates[i]);
+            }
+            return sqrt(len.real());
+
+        }
+        else
+        {
+            double len = 0.0;
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                len += _coordinates[i] * _coordinates[i];
+            }
+            return sqrt(len);
+        }
     }
 
     double operator*(const Vector<T>& rhs) const
@@ -124,16 +149,67 @@ public:
         {
             throw std::length_error("The dimensions are not equal");
         }
-        double result = 0.0;
-        for (size_t i = 0; i < _dimension; i++)
+
+        if (std::is_same_v<T, std::complex<float> >)
         {
-            result += _coordinates[i] * rhs._coordinates[i];
+            std::complex<float> result = std::complex<float>(0, 0);
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                result += _coordinates[i] * std::conj(rhs._coordinates[i]);
+            }
+            return result.real();
         }
-        return result;
+        if (std::is_same_v<T, std::complex<double> >)
+        {
+            std::complex<double> result = std::complex<double>(0, 0);
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                result += _coordinates[i] * std::conj(rhs._coordinates[i]);
+            }
+            return result.real();
+        }
+        else
+        {
+            double result = 0.0;
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                result += _coordinates[i] * rhs._coordinates[i];
+            }
+            return result;
+        }
     }
 
     Vector<T>& operator/=(const T a)
     {
+        if (std::is_same_v<T, std::complex<float> >)
+        {
+            if (a == std::complex<float>(0, 0))
+            {
+                throw std::invalid_argument("Divizion by 0");
+            }
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                _coordinates[i] /= a;
+            }
+            return *this;
+        }
+        if (std::is_same_v<T, std::complex<double> >)
+        {
+            if (a == std::complex<double>(0, 0))
+            {
+                throw std::invalid_argument("Divizion by 0");
+            }
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                _coordinates[i] /= a;
+            }
+            return *this;
+        }
+
+        else if (a == 0)
+        {
+            throw std::invalid_argument("Divizion by 0");
+        }
         for (size_t i = 0; i < _dimension; i++)
         {
             _coordinates[i] /= a;
@@ -168,6 +244,11 @@ public:
 
     bool operator>(const Vector<T>& rhs)
     {
+        if (IS_COMPLEX(T))
+        {
+            throw std::logic_error("Imposible to compare complex numbers");
+        }
+
         if (_dimension != rhs._dimension)
         {
             return false;
@@ -183,12 +264,18 @@ public:
             {
                 return false;
             }
-            return true;
         }
+        return true;
+
     }
 
     bool operator<(const Vector<T>& rhs)
     {
+        if (IS_COMPLEX(T))
+        {
+            throw std::logic_error("Imposible to compare complex numbers");
+        }
+
         if (_dimension != rhs._dimension)
         {
             return false;
@@ -204,13 +291,29 @@ public:
             {
                 return false;
             }
-            return true;
         }
+        return true;
+
     }
 
     bool operator==(const Vector<T>& rhs)
     {
-        if (_dimension != rhs._dimension || *this < rhs || *this > rhs)
+        if (_dimension != rhs._dimension)
+        {
+            return false;
+        }
+        if (IS_COMPLEX(T))
+        {
+            for (size_t i = 0; i < _dimension; i++)
+            {
+                if (_coordinates[i] != rhs._coordinates[i])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (*this < rhs || *this > rhs)
         {
             return false;
         }
@@ -219,6 +322,10 @@ public:
 
     bool operator>=(const Vector<T>& rhs)
     {
+        if (IS_COMPLEX(T))
+        {
+            throw std::logic_error("Imposible to compare complex numbers");
+        }
         if (_dimension != rhs._dimension || *this < rhs)
         {
             return false;
@@ -228,6 +335,10 @@ public:
 
     bool operator<=(const Vector<T>& rhs)
     {
+        if (IS_COMPLEX(T))
+        {
+            throw std::logic_error("Imposible to compare complex numbers");
+        }
         if (_dimension != rhs._dimension || *this > rhs)
         {
             return false;
@@ -249,7 +360,6 @@ public:
     }
 };
 
-
 template <typename T>
 Vector<T> operator*(T a, const Vector<T>& vec)
 {
@@ -262,10 +372,9 @@ std::ostream& operator<<(std::ostream& os, const Vector<T>& vec)
     os << "( ";
     for (size_t i = 0; i < vec.dimension(); i++)
     {
-        os << vec[i] << ", ";
+        os << vec[i] << " ";
     }
     os << ")\n";
     return os;
 }
-
 #endif
