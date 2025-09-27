@@ -19,7 +19,7 @@ public:
     Vector(const Vector<T>& vec)
     {
         _dimension = vec._dimension;
-        _coordinates = new T[_dimension * sizeof(T)];
+        _coordinates = new T[_dimension];
         for (size_t i = 0; i < _dimension; i++)
         {
             _coordinates[i] = vec._coordinates[i];
@@ -28,7 +28,7 @@ public:
 
     Vector(size_t dimention, T* coordinates) : _dimension(dimention)
     {
-        _coordinates = new T[dimention * sizeof(T)];
+        _coordinates = new T[dimention];
         for (size_t i = 0; i < dimention; i++)
         {
             _coordinates[i] = coordinates[i];
@@ -172,97 +172,37 @@ public:
         return new_vec;
     }
 
-    friend Vector<T> operator*(T a, const Vector<T>& vec);
-
-    bool operator>(const Vector<T>& rhs) const
+    friend Vector<T> operator*(const T& a, const Vector<T>& vec)
     {
-        if (_dimension != rhs._dimension)
-        {
-            return false;
-        }
-        for (size_t i = 0; i < _dimension; i++)
-        {
-            double difference = _coordinates[i] - rhs._coordinates[i];
-            if (abs(difference) < epsilon)
-            {
-                return false;
-            }
-            else if (difference < 0)
-            {
-                return false;
-            }
-        }
-        return true;
-
-    }
-
-    bool operator<(const Vector<T>& rhs) const
-    {
-        if (_dimension != rhs._dimension)
-        {
-            return false;
-        }
-        for (size_t i = 0; i < _dimension; i++)
-        {
-            double difference = _coordinates[i] - rhs._coordinates[i];
-            if (abs(difference) < epsilon)
-            {
-                return false;
-            }
-            else if (difference > 0)
-            {
-                return false;
-            }
-        }
-        return true;
+        return vec * a;
     }
 
     bool operator==(const Vector<T>& rhs) const
     {
-        if (_dimension != rhs._dimension || *this < rhs || *this > rhs)
+        if (_dimension != rhs._dimension || this->length() != rhs.length())
         {
             return false;
         }
-        return true;
-    }
-
-    bool operator>=(const Vector<T>& rhs) const
-    {
-        if (_dimension != rhs._dimension || *this < rhs)
+        for (size_t i = 0; i < this->length(); i++)
         {
-            return false;
-        }
-        return true;
-    }
-
-    bool operator<=(const Vector<T>& rhs) const
-    {
-        if (_dimension != rhs._dimension || *this > rhs)
-        {
-            return false;
+            double difference = abs(static_cast<double>(_coordinates[i]) - static_cast<double>(rhs._coordinates[i]));
+            if (difference > epsilon)
+            {
+                return false;
+            }
         }
         return true;
     }
 
     bool operator!=(const Vector<T>& rhs) const
     {
-        if (_dimension != rhs._dimension || !(*this == rhs))
-        {
-            return true;
-        }
-        return false;
+        return !(*this == rhs);
     }
     ~Vector()
     {
         delete[] _coordinates;
     }
 };
-
-template <typename T>
-Vector<T> operator*(T a, const Vector<T>& vec)
-{
-    return vec * a;
-}
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Vector<T>& vec)
@@ -333,59 +273,17 @@ inline double Vector<std::complex<double> >::length() const
 
 }
 
-
-template<>
-inline bool Vector<std::complex<float> >::operator<(const Vector<std::complex<float> >& rhs) const
-{
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
-template<>
-inline bool Vector<std::complex<double> >::operator<(const Vector<std::complex<double> >& rhs) const {
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
-template<>
-inline bool Vector<std::complex<float> >::operator>(const Vector<std::complex<float> >& rhs) const
-{
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
-template<>
-inline bool Vector<std::complex<double> >::operator>(const Vector<std::complex<double> >& rhs) const {
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
-template<>
-inline bool Vector<std::complex<float> >::operator<=(const Vector<std::complex<float> >& rhs) const
-{
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
-template<>
-inline bool Vector<std::complex<double> >::operator<=(const Vector<std::complex<double> >& rhs) const {
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-template<>
-inline bool Vector<std::complex<float> >::operator>=(const Vector<std::complex<float> >& rhs) const
-{
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
-template<>
-inline bool Vector<std::complex<double> >::operator>=(const Vector<std::complex<double> >& rhs) const {
-    throw std::logic_error("Imposible to compare complex numbers");
-}
-
 template<>
 inline bool Vector<std::complex<float> >::operator==(const Vector<std::complex<float> >& rhs) const {
-    if (_dimension != rhs._dimension)
+    if (_dimension != rhs._dimension || this->length() != rhs.length())
     {
         return false;
     }
     for (size_t i = 0; i < _dimension; i++)
     {
-        if (_coordinates[i] != rhs._coordinates[i])
+        double difference_re = abs((double)_coordinates[i].real() - (double)rhs._coordinates[i].real());
+        double difference_im = abs((double)_coordinates[i].imag() - (double)rhs._coordinates[i].imag());
+        if (difference_re > epsilon || difference_im > epsilon)
         {
             return false;
         }
@@ -395,19 +293,20 @@ inline bool Vector<std::complex<float> >::operator==(const Vector<std::complex<f
 
 template<>
 inline bool Vector<std::complex<double> >::operator==(const Vector<std::complex<double> >& rhs) const {
-    if (_dimension != rhs._dimension)
+    if (_dimension != rhs._dimension || this->length() != rhs.length())
     {
         return false;
     }
     for (size_t i = 0; i < _dimension; i++)
     {
-        if (_coordinates[i] != rhs._coordinates[i])
+        double difference_re = abs(_coordinates[i].real() - rhs._coordinates[i].real());
+        double difference_im = abs(_coordinates[i].imag() - rhs._coordinates[i].imag());
+        if (difference_re > epsilon || difference_im > epsilon)
         {
             return false;
         }
     }
     return true;
 }
-
 
 #endif
