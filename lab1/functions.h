@@ -30,13 +30,18 @@ void show_methods(const Vector<T>& a, const Vector<T>& b)
         cout << "A[0] = " << a[0] << "\n\n";
     }
     {
+        cout << "Length A: " << a.length() << "\n\n";
+    }
+    {
         cout << "Operator =, +, +=\n";
-        Vector<T> c = a + b;
+        Vector<T> c = a;
+        c = a + b;
         cout << "A + B = " << c << "\n";
     }
     {
         cout << "Operator -, -=\n";
-        Vector<T> c = a - b;
+        Vector<T> c = a;
+        c -= b;
         cout << "A - B = " << c << "\n";
     }
     {

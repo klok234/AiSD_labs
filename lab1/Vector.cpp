@@ -35,6 +35,7 @@ Vector<double>::Vector(size_t dimension, double start_rand, double end_rand)
         _coordinates[i] = distribution(engine);
     }
 }
+
 Vector< std::complex<float> >::Vector(size_t dimension, std::complex<float> start_rand, std::complex<float> end_rand)
 {
     _dimension = dimension;

@@ -34,7 +34,7 @@ public:
             _coordinates[i] = coordinates[i];
         }
     }
-
+    
     Vector(size_t dimention, int start_rand, int end_rand);
     Vector(size_t dimention, float start_rand, float end_rand);
     Vector(size_t dimention, double start_rand, double end_rand);
@@ -65,8 +65,10 @@ public:
 
     Vector<T>& operator=(const Vector<T>& rhs)
     {
-        Vector<T> new_vec = Vector<T>(rhs);
-        return new_vec;
+        Vector<T> tmp(rhs);
+        this->_dimension = tmp._dimension;
+        std::swap(_coordinates, tmp._coordinates);
+        return *this;
     }
 
     Vector<T>& operator+=(const Vector<T>& rhs)
@@ -109,15 +111,6 @@ public:
         return new_vec;
     }
 
-    double length() const
-    {
-        double len = 0.0;
-        for (size_t i = 0; i < _dimension; i++)
-        {
-            len += _coordinates[i] * _coordinates[i];
-        }
-        return sqrt(len);
-    }
 
     double operator*(const Vector<T>& rhs) const
     {
@@ -134,6 +127,16 @@ public:
             }
             return result;
         }
+    }
+
+    double length() const
+    {
+        //double len = 0.0;
+        //for (size_t i = 0; i < _dimension; i++)
+        //{
+        //    len += _coordinates[i] * _coordinates[i];
+        //}
+        return sqrt((*this) * (*this));
     }
 
     Vector<T>& operator/=(const T a)
@@ -249,29 +252,29 @@ inline double Vector<std::complex<double> >::operator*(const Vector<std::complex
     return result.real();
 }
 
-template<>
-inline double Vector<std::complex<float> >::length() const
-{
-    std::complex<float> len = std::complex<float>(0, 0);
-    for (size_t i = 0; i < _dimension; i++)
-    {
-        len += _coordinates[i] * std::conj(_coordinates[i]);
-    }
-    return sqrt(len.real());
-
-}
-
-template<>
-inline double Vector<std::complex<double> >::length() const
-{
-    std::complex<double> len = std::complex<double>(0, 0);
-    for (size_t i = 0; i < _dimension; i++)
-    {
-        len += _coordinates[i] * std::conj(_coordinates[i]);
-    }
-    return sqrt(len.real());
-
-}
+//template<>
+//inline double Vector<std::complex<float> >::length() const
+//{
+//    std::complex<float> len = std::complex<float>(0, 0);
+//    for (size_t i = 0; i < _dimension; i++)
+//    {
+//        len += _coordinates[i] * std::conj(_coordinates[i]);
+//    }
+//    return sqrt(len.real());
+//
+//}
+//
+//template<>
+//inline double Vector<std::complex<double> >::length() const
+//{
+//    std::complex<double> len = std::complex<double>(0, 0);
+//    for (size_t i = 0; i < _dimension; i++)
+//    {
+//        len += _coordinates[i] * std::conj(_coordinates[i]);
+//    }
+//    return sqrt(len.real());
+//
+//}
 
 template<>
 inline bool Vector<std::complex<float> >::operator==(const Vector<std::complex<float> >& rhs) const {
@@ -308,5 +311,6 @@ inline bool Vector<std::complex<double> >::operator==(const Vector<std::complex<
     }
     return true;
 }
+
 
 #endif
