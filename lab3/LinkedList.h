@@ -11,8 +11,8 @@ struct Node {
     Node* next;
     Node* prev;
     Node() = delete;
-    Node(T value, Node* next, Node* prev) : value(value), next(next), prev(prev){}
-    Node(T value) : value(value), next(nullptr), prev(nullptr){}
+    Node(T value, Node* next, Node* prev) : value(value), next(next), prev(prev) {}
+    Node(T value) : value(value), next(nullptr), prev(nullptr) {}
 };
 
 template <class T>
@@ -24,141 +24,158 @@ std::ostream& operator<<(std::ostream& os, const Node<T>& node)
 template <class T>
 class LinkedList {
     Node<T>* _head;
+    Node<T>* _tail;
 
 public:
-    LinkedList() : _head(nullptr) {}
-    LinkedList(const LinkedList& other)
+    LinkedList() : _head(nullptr), _tail(nullptr) {}
+
+    LinkedList(const LinkedList& other) : _head(nullptr), _tail(nullptr)
     {
         Node<T>* iter_other = other._head;
-        if (!iter_other)
+        while (iter_other != nullptr)
         {
-            _head = nullptr;
-        }
-        else
-        {
-            _head = new Node<T>(other._head->value);
-            Node<T>* iter = _head;
-
+            this->push_tail(iter_other->value);
             iter_other = iter_other->next;
-            while (iter_other != other._head)
-            {
-                iter->next = new Node<T>(iter_other->value, _head, iter);
-                iter_other = iter_other->next;
-                iter = iter->next;
-            }
-            _head->prev = iter;
         }
     }
-    LinkedList(size_t length, T start, T end, unsigned int seed)
+
+    LinkedList(size_t length, T start, T end, unsigned int seed) : _head(nullptr), _tail(nullptr)
     {
         if (length == 0)
         {
-            _head = nullptr;
+            return;
         }
-        else {
-            std::default_random_engine engine(seed);
-            std::uniform_real_distribution distribution(std::min(static_cast<double>(start), static_cast<double>(end)), std::max(static_cast<double>(start), static_cast<double>(end)));
 
-            _head = new Node<T>(static_cast<T>(distribution(engine)));
-            Node<T>* iter = _head;
+        std::default_random_engine engine(seed);
+        std::uniform_real_distribution<double> distribution(std::min(start, end), std::max(start, end));
 
-            for (size_t i = 0; i < length - 1; i++)
-            {
-                iter->next = new Node<T>(static_cast<T>(distribution(engine)), _head, iter);
-                iter = iter->next;
-            }
-            _head->prev = iter;
+        for (size_t i = 0; i < length; i++)
+        {
+            this->push_tail(distribution(engine));
         }
     }
 
     void push_tail(const T& value)
     {
-        Node<T>* new_node = new Node<T>(value, _head, _head->prev);
-        _head->prev->next = new_node;
-        _head->prev = new_node;
+        Node<T>* new_node = new Node<T>(value);
+        if (!_head)
+        {
+            _head = new_node;
+            _tail = new_node;
+        }
+        else
+        {
+            _tail->next = new_node;
+            new_node->prev = _tail;
+            _tail = new_node;
+        }
     }
 
     void push_tail(const LinkedList<T>& list)
     {
-        LinkedList<T> tmp(list);
-        Node<T>* tmp_tail = tmp._head->prev;
-        _head->prev->next = tmp._head;
-        tmp._head->prev = _head->prev;
-        tmp_tail->next = _head;
-        _head->prev = tmp_tail;
-        tmp._head = nullptr;
+        Node<T>* current = list._head;
+        while (current != nullptr)
+        {
+            this->push_tail(current->value);
+            current = current->next;
+        }
     }
 
     void push_head(const T& value)
     {
-        Node<T>* new_node = new Node<T>(value, _head, _head->prev);
-        _head->prev->next = new_node;
-        _head->prev = new_node;
-        _head = new_node;
+        Node<T>* new_node = new Node<T>(value);
+        if (!_head)
+        {
+            _head = new_node;
+            _tail = new_node;
+        }
+        else
+        {
+            new_node->next = _head;
+            _head->prev = new_node;
+            _head = new_node;
+        }
     }
 
     void push_head(const LinkedList<T>& list)
     {
-        LinkedList<T> tmp(list);
-        Node<T>* tmp_tail = tmp._head->prev;
-        _head->prev->next = tmp._head;
-        tmp._head->prev = _head->prev;
-        tmp_tail->next = _head;
-        _head->prev = tmp_tail;
-        _head = tmp._head;
-        tmp._head = nullptr;
+        Node<T>* current = list._tail;
+        while (current != nullptr)
+        {
+            this->push_head(current->value);
+            current = current->prev;
+        }
     }
 
     void pop_tail()
     {
-        if (!_head)
+        if (!_tail) return;
+
+        if (_head == _tail)
         {
-            return;
-        }
-        Node<T>* tmp = _head->prev;
-        if (tmp == _head)
-        {
+            delete _tail;
             _head = nullptr;
-            return;
+            _tail = nullptr;
         }
-        _head->prev = _head->prev->prev;
-        tmp->prev->next = _head;
-        delete tmp;
+        else
+        {
+            Node<T>* new_tail = _tail->prev;
+            new_tail->next = nullptr;
+            delete _tail;
+            _tail = new_tail;
+        }
     }
 
     void pop_head()
     {
-        if (!_head)
+        if (!_head) return;
+
+        if (_head == _tail)
         {
-            return;
+            delete _head;
+            _head = nullptr;
+            _tail = nullptr;
         }
-        _head = _head->next;
-        this->pop_tail();
+        else
+        {
+            Node<T>* new_head = _head->next;
+            new_head->prev = nullptr;
+            delete _head;
+            _head = new_head;
+        }
     }
 
     void delete_node(const T& value)
     {
-        if (!_head)
+        Node<T>* current = _head;
+        while (current != nullptr)
         {
-            return;
-        }
-        Node<T>* iter = _head->next;
-        while (iter != _head)
-        {
-            if (iter->value == value)
+            if (current->value == value)
             {
-                Node<T>* tmp = iter;
-                tmp->next->prev = tmp->prev;
-                tmp->prev->next = tmp->next;
-                iter = iter->next;
-                delete tmp;
-                continue;
+                if (current == _head)
+                {
+                    this->pop_head();
+                    current = _head;
+                }
+                else if (current == _tail)
+                {
+                    this->pop_tail();
+                    current = nullptr;
+                }
+                else
+                {
+                    Node<T>* prev_node = current->prev;
+                    Node<T>* next_node = current->next;
+                    prev_node->next = next_node;
+                    next_node->prev = prev_node;
+                    delete current;
+                    current = next_node;
+                }
             }
-            iter = iter->next;
-        }
-        if (_head->value == value)
-        {
-            this->pop_head();
+            else
+            {
+                current = current->next;
+            }
         }
     }
 
@@ -168,16 +185,17 @@ public:
         {
             throw std::range_error("Empty list");
         }
-        Node<T>* iter = _head->next;
+
+        Node<T>* current = _head;
         for (size_t i = 0; i < index; i++)
         {
-            if (iter == _head)
+            if (!current->next)
             {
                 throw std::range_error("Out of range");
             }
-            iter = iter->next;
+            current = current->next;
         }
-        return iter->value;
+        return current->value;
     }
 
     T& operator[](size_t index)
@@ -186,62 +204,84 @@ public:
         {
             throw std::range_error("Empty list");
         }
-        Node<T>* iter = _head->next;
+
+        Node<T>* current = _head;
         for (size_t i = 0; i < index; i++)
         {
-            if (iter == _head)
+            if (!current->next)
             {
                 throw std::range_error("Out of range");
             }
-            iter = iter->next;
+            current = current->next;
         }
-        return iter->prev->value;
+        return current->value;
     }
 
     LinkedList<T>& operator=(const LinkedList<T>& rhs)
     {
-        LinkedList<T> tmp(rhs);
-        std::swap(_head, tmp._head);
+        if (this != &rhs)
+        {
+            while (_head)
+            {
+                this->pop_head();
+            }
+            Node<T>* current = rhs._head;
+            while (current != nullptr)
+            {
+                this->push_tail(current->value);
+                current = current->next;
+            }
+        }
         return *this;
     }
 
     void reverse()
     {
-        if (!_head)
+        if (!_head || !_head->next) return;
+
+        Node<T>* current = _head;
+        Node<T>* temp = nullptr;
+
+        while (current != nullptr)
         {
-            return;
+            temp = current->prev;
+            current->prev = current->next;
+            current->next = temp;
+            current = current->prev;
         }
-        Node<T>* iter = _head->next;
-        while (iter != _head)
-        {
-            std::swap(iter->next, iter->prev);
-            iter = iter->prev;
-        }
-        std::swap(_head->next, _head->prev);
-        _head = _head->next;
+
+        temp = _head;
+        _head = _tail;
+        _tail = temp;
     }
 
-    const Node<T>* get_head() const
+    const Node<T>* get_head() const { return _head; }
+    Node<T>* get_head() { return _head; }
+
+    const Node<T>* get_tail() const { return _tail; }
+    Node<T>* get_tail() { return _tail; }
+
+    size_t size() const
     {
-        return _head;
+        size_t count = 0;
+        Node<T>* current = _head;
+        while (current != nullptr)
+        {
+            count++;
+            current = current->next;
+        }
+        return count;
     }
 
-    Node<T>* get_head()
-    {
-        return _head;
-    }
+    bool empty() const { return _head == nullptr; }
 
     ~LinkedList()
     {
-        if (_head)
+        while (_head != nullptr)
         {
-            _head->prev->next = nullptr;
-            while (_head->next)
-            {
-                _head = _head->next;
-                delete _head->prev;
-            }
+            Node<T>* next = _head->next;
             delete _head;
+            _head = next;
         }
     }
 };
@@ -249,19 +289,18 @@ public:
 template <class T>
 std::ostream& operator<<(std::ostream& os, const LinkedList<T>& list)
 {
-    const Node<T>* head = list.get_head();
-    if (!head)
+    const Node<T>* current = list.get_head();
+    os << "{ ";
+    while (current != nullptr)
     {
-        return os;
+        os << current->value;
+        if (current->next != nullptr)
+        {
+            os << " <-> ";
+        }
+        current = current->next;
     }
-    os << "{ " << *head << " ";
-    Node<T>* iter = head->next;
-    while (iter != head)
-    {
-        os << *iter << " ";
-        iter = iter->next;
-    }
-    os << "}\n";
+    os << " }";
     return os;
 }
 

@@ -24,7 +24,7 @@ void reverse(LinkedList<T>& list)
 
 int main()
 {
-    cout << "Lab2: Var 10 Task 4 #2 (base level): by Dolzhikov D.A. 6212-100503D\n\n";
+    cout << "Lab2: Var 10 Task 2 (base level): by Dolzhikov D.A. 6212-100503D\n\n";
 
     size_t len = 1;
     cout << "Input length: ";
@@ -41,13 +41,14 @@ int main()
     LinkedList<int> list(len, start_rand, end_rand, seed); // tested by 7 1 12 2
 
     cout << list << "\n";
+
     list.reverse();
     cout << list << "\n";
     reverse(list);
     cout << list << "\n";
 
-    list[4] = 0;
-    cout << list[6] << "\n";
+    //list[4] = 0;
+    //cout << list[6] << "\n";
 
     list.push_head(6);
     cout << list << "\n";
@@ -56,6 +57,9 @@ int main()
     list.delete_node(11);
     cout << list << "\n";
 
+    //LinkedList<int> list2 = list;
+    //list2[3] = -4;
+    //cout << list2 << "\n";
 
     return 0;
 }

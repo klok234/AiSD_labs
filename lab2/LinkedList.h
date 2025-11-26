@@ -26,7 +26,7 @@ class LinkedList {
     Node<T>* _head;
 
 public:
-    LinkedList() : _head(nullptr) {}
+    LinkedList() : _head(NULL) {}
     LinkedList(const LinkedList& other)
     {
         Node<T>* iter_other = other._head;
@@ -177,7 +177,7 @@ public:
             }
             iter = iter->next;
         }
-        return iter->value;
+        return iter->prev->value;
     }
 
     T& operator[](size_t index)
