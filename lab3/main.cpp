@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <random>
 #include <fstream>
+#include <thread>
 #include "LinkedList.h"
 #include "Sorting.h"
 
@@ -40,7 +41,7 @@ ostream& operator<<(ostream& os, vector<stats> vec)
 void get_average(size_t size, unsigned int seed, vector<stats>& insertion, vector<stats>& shaker, vector<stats>& quick)
 {
     default_random_engine en(seed);
-    uniform_int_distribution<int> dist(-1000000, 1000000);
+    uniform_int_distribution<int> dist(-100000, 100000);
     stats ins, sha, qui;
     size_t count = 5;
     vector<int> vec1(size);
@@ -64,6 +65,23 @@ void get_average(size_t size, unsigned int seed, vector<stats>& insertion, vecto
 }
 
 
+void func(vector<int>& unsorted, size_t i, vector<stats>& insertion, vector<stats>& shaker, vector<stats>& quick)
+{
+    vector<int> unsorted1(i*1000);
+    get_average(i * 1000, i, insertion, shaker, quick);
+    copy(unsorted.begin(), unsorted.begin() + i * 1000, unsorted1.begin());
+    insertion.push_back(insertion_sort(unsorted1));
+    insertion.push_back(insertion_sort(unsorted1));
+    copy(unsorted.begin(), unsorted.begin() + i * 1000, unsorted1.begin());
+    shaker.push_back(shaker_sort(unsorted1));
+    shaker.push_back(shaker_sort(unsorted1));
+    copy(unsorted.begin(), unsorted.begin() + i * 1000, unsorted1.begin());
+    quick.push_back(quick_sort(unsorted1));
+    quick.push_back(quick_sort(unsorted1));
+    cout << "Complite for " << i << "\n";
+}
+
+
 int main()
 {
     cout << "Lab3: Var 10 Task 1,1,0: by Dolzhikov D.A. 6212-100503D\n\n";
@@ -79,39 +97,32 @@ int main()
     vector<stats> shaker;
     vector<stats> quick;
 
-    vector<size_t> sizes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 25, 50 };
+    vector<size_t> sizes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
+    thread th1(func, ref(unsorted), 25, ref(insertion), ref(shaker), ref(quick));
+    thread th2(func, ref(unsorted), 50, ref(insertion), ref(shaker), ref(quick));
 
     for (size_t i = 0; i < sizes.size(); i++)
     {
-
-        vector<int> unsorted1(sizes[i] * 1000);
-        copy(unsorted.begin(), unsorted.begin() + sizes[i]*1000, unsorted1.begin());
-        get_average(sizes[i] * 1000, i, insertion, shaker, quick);
-
-        insertion.push_back(insertion_sort(unsorted1));
-        insertion.push_back(insertion_sort(unsorted1));
-        copy(unsorted.begin(), unsorted.begin() + sizes[i]*1000, unsorted1.begin());
-        shaker.push_back(shaker_sort(unsorted1));
-        shaker.push_back(shaker_sort(unsorted1));
-        copy(unsorted.begin(), unsorted.begin() + sizes[i] * 1000, unsorted1.begin());
-        quick.push_back(quick_sort(unsorted1));
-        quick.push_back(quick_sort(unsorted1));
-        cout << "Complite for " << sizes[i] << "\n";
+        func(unsorted, sizes[i], insertion, shaker, quick);
     }
+
+    th1.join();
+    th2.join();
+
     cout << insertion << shaker << quick;
-    //ofstream f;
-    //f.open("insertion_res.txt");
-    //f << insertion;
-    //f.close();
+    ofstream f;
+    f.open("insertion_res.txt");
+    f << insertion;
+    f.close();
 
-    //f.open("shaker_res.txt");
-    //f << shaker;
-    //f.close();
+    f.open("shaker_res.txt");
+    f << shaker;
+    f.close();
 
-    //f.open("quick_res.txt");
-    //f << quick;
-    //f.close();
+    f.open("quick_res.txt");
+    f << quick;
+    f.close();
 
     LinkedList<int> list;
     list.push_tail(4);
