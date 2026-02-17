@@ -1,7 +1,7 @@
 ﻿#include <iostream>
 #include <random>
 #include <fstream>
-#include <thread>
+#include "class.h"
 #include "LinkedList.h"
 #include "Sorting.h"
 
@@ -19,6 +19,17 @@ ostream& operator<<(ostream& os, vector<T> vec)
     return os;
 }
 
+
+ostream& operator<<(ostream& os, vector <People> p)
+{
+    os << "{\n";
+    for (size_t i = 0; i < p.size(); i++)
+    {
+        os << "Name is " << p[i]._name << " Height is " << p[i]._height << "\n";
+    }
+    os << "}\n";
+    return os;
+}
 
 ostream& operator<<(ostream& os, stats s)
 {
@@ -43,7 +54,7 @@ void get_average(size_t size, unsigned int seed, vector<stats>& insertion, vecto
     default_random_engine en(seed);
     uniform_int_distribution<int> dist(-100000, 100000);
     stats ins, sha, qui;
-    size_t count = 5;
+    size_t count = 10;
     vector<int> vec1(size);
     vector<int> vec2(size);
     vector<int> vec3(size);
@@ -62,6 +73,8 @@ void get_average(size_t size, unsigned int seed, vector<stats>& insertion, vecto
     insertion.push_back(ins / count);
     shaker.push_back(sha / count);
     quick.push_back(qui / count);
+    cout << "Rand arrays for " << size << " elements\n";
+    cout << ins / count << sha / count << qui / count;
 }
 
 
@@ -78,7 +91,7 @@ void func(vector<int>& unsorted, size_t i, vector<stats>& insertion, vector<stat
     copy(unsorted.begin(), unsorted.begin() + i * 1000, unsorted1.begin());
     quick.push_back(quick_sort(unsorted1));
     quick.push_back(quick_sort(unsorted1));
-    cout << "Complite for " << i << "\n";
+    cout << "Complite for " << i*1000 << "\n";
 }
 
 
@@ -99,50 +112,80 @@ int main()
 
     vector<size_t> sizes = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    thread th1(func, ref(unsorted), 25, ref(insertion), ref(shaker), ref(quick));
-    thread th2(func, ref(unsorted), 50, ref(insertion), ref(shaker), ref(quick));
 
     for (size_t i = 0; i < sizes.size(); i++)
     {
         func(unsorted, sizes[i], insertion, shaker, quick);
     }
 
-    th1.join();
-    th2.join();
+    //ofstream f;
+    //f.open("insertion_res.txt");
+    //f << insertion;
+    //f.close();
 
-    cout << insertion << shaker << quick;
-    ofstream f;
-    f.open("insertion_res.txt");
-    f << insertion;
-    f.close();
+    //f.open("shaker_res.txt");
+    //f << shaker;
+    //f.close();
 
-    f.open("shaker_res.txt");
-    f << shaker;
-    f.close();
-
-    f.open("quick_res.txt");
-    f << quick;
-    f.close();
+    //f.open("quick_res.txt");
+    //f << quick;
+    //f.close();
 
     LinkedList<int> list;
-    list.push_tail(4);
-    list.push_tail(67);
-    list.push_tail(2);
-    list.push_tail(76);
-    list.push_tail(2);
-    list.push_tail(7);
-    list.push_tail(4);
-    list.push_tail(89);
-    list.push_tail(1);
-    list.push_tail(7);
-    list.push_tail(55);
-    list.push_tail(7);
+    vector<People> p;
+
+    {
+        p.push_back(People("Tom", 150));
+        p.push_back(People("Jack", 178));
+        p.push_back(People("Jerry", 142));
+        p.push_back(People("Mike", 134));
+        p.push_back(People("Alex", 200));
+        p.push_back(People("Max", 170));
+        p.push_back(People("Steve", 200));
+    }
+    {
+        list.push_tail(4);
+        list.push_tail(67);
+        list.push_tail(2);
+        list.push_tail(76);
+        list.push_tail(2);
+        list.push_tail(7);
+        list.push_tail(4);
+        list.push_tail(89);
+        list.push_tail(1);
+        list.push_tail(7);
+        list.push_tail(55);
+        list.push_tail(7);
+    }
 
     cout << "Original list: " << list << endl;
 
     stats list_stats = insertion_sort(list);
     cout << "Sorted list: " << list << endl;
     cout << "List insertion sort: " << list_stats.comparison_count << " comparisons, " << list_stats.copy_count << " copies\n";
+
+    cout << "Original list: " << p << endl;
+    stats people_stats = quick_sort(p);
+    cout << "Sorted people: " << p << endl;
+    cout << "List insertion sort: " << people_stats.comparison_count << " comparisons, " << people_stats.copy_count << " copies\n";
+
+    string s = "lkhvgcgx";
+
+    vector<char> a;
+
+    for (auto& i : s)
+    {
+        a.push_back(i);
+    }
+
+    cout << s  << "\n";
+
+    quick_sort(a);
+
+    string x(a.begin(), a.end());
+
+    cout << x;
+
 
     return 0;
 }

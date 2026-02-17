@@ -72,22 +72,28 @@ stats shaker_sort(std::vector<T>& vec)
 
     int left = 1;
     int right = vec.size() - 1;
-    while (left <= right)
+    bool swaped = true;
+    while (left <= right && swaped)
     {
+        swaped = false;
         for (int i = left; i <= right; ++i) {
             ++s.comparison_count;
             if (vec[i - 1] > vec[i])
             {
+                swaped = true;
                 std::swap(vec[i - 1], vec[i]);
                 s.copy_count += 3;
             }
         }
+        if (!swaped) break;
+        swaped = false;
         --right;
 
         for (int i = right; i >= left; --i) {
             ++s.comparison_count;
             if (vec[i - 1] > vec[i])
             {
+                swaped = true;
                 std::swap(vec[i - 1], vec[i]);
                 s.copy_count += 3;
             }
