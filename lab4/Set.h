@@ -3,13 +3,10 @@
 
 #include <iostream>
 #include <exception>
+#include <vector>
 
 
-size_t lcg() {
-    static size_t x = 0;
-    x = (1021 * x + 24631) % 116640;
-    return x;
-}
+size_t lcg();
 
 struct Node
 {
@@ -186,6 +183,13 @@ private:
         return root;
     }
 
+    void to_std_vector(Node* root, std::vector<int>& buff) const
+    {
+        if (!root) return;
+        to_std_vector(root->left, buff);
+        buff.push_back(root->value);
+        to_std_vector(root->right, buff);
+    }
 
 public:
     Set() = default;
@@ -209,6 +213,7 @@ public:
     void print() const
     {
         print_tree(_root);
+        std::cout << "\n";
     }
 
     bool insert(int key)
@@ -223,6 +228,13 @@ public:
         }
         insert(_root, key);
         return true;
+    }
+
+    std::vector<int> to_std_vector() const
+    {
+        std::vector<int> result;
+        to_std_vector(_root, result);
+        return result;
     }
 
     bool contains(int key) const
@@ -249,5 +261,7 @@ public:
     }
 };
 
+void get_stats_for_set();
+void get_stats_for_vector();
 
 #endif
