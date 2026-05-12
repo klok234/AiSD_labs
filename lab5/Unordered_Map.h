@@ -21,9 +21,9 @@ class UnorderedMap
     Node<T>** _table = nullptr;
     size_t _capacity = 0;
     size_t hash(int key) {
-        double p = (std::sqrt(5.0) - 1.0) / 2.0 * static_cast<double>(1ULL << 32) * static_cast<double>(key);
+        double p = 0.6180339887 * static_cast<double>(key);
         double frac = p - std::floor(p);
-        return static_cast<size_t>(std::floor(_capacity * frac));
+        return static_cast<size_t>(_capacity * frac);
     }
 public:
     UnorderedMap(size_t capacity) : _capacity(capacity)
@@ -32,7 +32,7 @@ public:
         for (size_t i = 0; i < _capacity; i++)
             _table[i] = nullptr;
     }
-
+    
     UnorderedMap(const UnorderedMap<T>& other) : _capacity(other._capacity)
     {
         _table = new Node<T>*[_capacity];
@@ -160,25 +160,22 @@ public:
     bool erase(int key)
     {
         Node<T>* iter = _table[hash(key)];
-        if (iter->is_used)
+        if (!iter->next)
         {
-            if (!iter->next)
+            delete iter;
+            _table[hash(key)] = new Node<T>*();
+            return true;
+        }
+        while (iter)
+        {
+            if (iter->key == key)
             {
-                delete iter;
-                _table[hash(key)] = new Node<T>*();
+                Node<T>* tmp = iter;
+                iter = iter->next;
+                delete tmp;
                 return true;
             }
-            while (iter)
-            {
-                if (iter->key == key)
-                {
-                    Node<T>* tmp = iter;
-                    iter = iter->next;
-                    delete tmp;
-                    return true;
-                }
-                iter = iter->next;
-            }
+            iter = iter->next;
         }
         return false;
     }

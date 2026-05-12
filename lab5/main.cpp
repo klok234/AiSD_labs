@@ -58,8 +58,9 @@ int roman_to_int(const std::string& roman) {
     }
     return result;
 }
-
+// XLII - 50 - 10 + 1 + 1 = 42 LXIV = 50 + 10 + 5 - 1 = 64
 int main() {
+    cout << "Lab2: HashTables var (1,2,2). By Dolzhikov D.A. 6212-100503D\n";
     string roman;
     cout << "Input roman value: ";
     cin >> roman;

@@ -1,4 +1,4 @@
-#ifndef GRAPH
+п»ї#ifndef GRAPH
 #define GRAPH
 
 #include <iostream>
@@ -10,6 +10,8 @@
 #include <functional>
 #include <algorithm>
 #include <numeric>
+#include <fstream>
+#include <cstdlib>
 #include <unordered_map>
 
 
@@ -247,24 +249,21 @@ public:
             }
             if (!updated) break;
         }
-        // Проверка отрицательного цикла
         for (const auto& [u, edges] : adj) {
             if (dist[u] == INF) continue;
             for (const Edge& e : edges) {
                 if (dist[u] + e.weight < dist[e.target])
-                    throw std::runtime_error("Отрицательный цикл в графе");
+                    throw std::runtime_error("Negative cycle in graph");
             }
         }
         return dist;
     }
 
-    // 2. Кратчайший путь от from до to через Беллмана–Форда
     std::vector<Edge> shortest_path(const Vertex& from, const Vertex& to) const {
         auto dist = bellman_ford(from);
         if (dist.find(to) == dist.end() || dist[to] == std::numeric_limits<Distance>::infinity())
             return {};
 
-        // Восстановление пути
         std::vector<Edge> path;
         Vertex cur = to;
         while (cur != from) {
@@ -280,51 +279,46 @@ public:
                 }
                 if (found) break;
             }
-            if (!found) return {}; // несвязный граф
+            if (!found) return {};
         }
         std::reverse(path.begin(), path.end());
         return path;
     }
 
-    // 3. Экспорт в формат DOT (для Graphviz)
-    void export_to_dot(const std::string& filename, bool directed = true) const {
+    void export_to_json(const std::string& filename) const {
         std::ofstream file(filename);
         if (!file.is_open()) return;
-        file << (directed ? "digraph G {\n" : "graph G {\n");
-        file << "  node [shape=circle, style=filled, fillcolor=lightblue];\n";
-        for (const auto& p : adj) {
-            file << "  \"" << p.first << "\";\n";
+
+        file << "{\n  \"vertices\": [";
+        std::vector<Vertex> verts = vertices();
+        for (size_t i = 0; i < verts.size(); ++i) {
+            file << "\"" << verts[i] << "\"";
+            if (i + 1 < verts.size()) file << ", ";
         }
+        file << "],\n  \"edges\": [\n";
+
+        bool first_edge = true;
         for (const auto& [from, edges] : adj) {
             for (const Edge& e : edges) {
-                if (directed) {
-                    file << "  \"" << from << "\" -> \"" << e.target
-                        << "\" [label=\"" << e.weight << "\"];\n";
-                }
-                else {
-                    if (from <= e.target) // избегаем двойных рёбер
-                        file << "  \"" << from << "\" -- \"" << e.target
-                        << "\" [label=\"" << e.weight << "\"];\n";
-                }
+                if (!first_edge) file << ",\n";
+                first_edge = false;
+                file << "    {\"from\": \"" << from << "\", \"to\": \"" << e.target
+                    << "\", \"weight\": " << e.weight << "}";
             }
         }
-        file << "}\n";
+        file << "\n  ]\n}\n";
         file.close();
     }
 
-    // 4. Красивая печать в консоль
     void print() const {
-        std::cout << "Граф (" << order() << " вершин):\n";
-        for (const auto& [v, edges] : adj) {
-            std::cout << "  " << v << " ? ";
-            if (edges.empty()) std::cout << "(нет исходящих)";
-            else {
-                for (size_t i = 0; i < edges.size(); ++i) {
-                    std::cout << edges[i].target << "[" << edges[i].weight << "]";
-                    if (i + 1 < edges.size()) std::cout << ", ";
-                }
-            }
-            std::cout << '\n';
+        const std::string json_file = "graph_temp.json";
+        export_to_json(json_file);
+
+        std::string cmd = "python -c \"import subprocess, sys; sys.path.append('.'); "
+            "import visualize; visualize.show_graph('" + json_file + "')\"";
+        int ret = std::system(cmd.c_str());
+        if (ret != 0) {
+            throw std::runtime_error("Something went wrong in visualizing");
         }
     }
 
