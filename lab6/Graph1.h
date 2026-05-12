@@ -47,15 +47,16 @@ public:
     {
         if (!has_vertex(v)) return false;
 
-        for (auto& vert : adj)
-        {
-            for (auto& it : vert.second)
-            {
-                if (it.target == v)
-                {
-                    vert.second.erase(std::find(vert.second.begin(), vert.second.end(), it));
+        std::vector<std::pair<Vertex, typename std::vector<Edge>::iterator>> incoming;
+        for (auto& [u, edges] : adj) {
+            for (auto it = edges.begin(); it != edges.end(); ++it) {
+                if (it->target == v) {
+                    incoming.emplace_back(u, it);
                 }
             }
+        }
+        for (auto& [u, it] : incoming) {
+            adj[u].erase(it);
         }
         adj.erase(v);
         return true;
@@ -80,34 +81,23 @@ public:
 
     bool remove_edge(const Vertex& from, const Vertex& to)
     {
-        if (!has_vertex(from) || !has_vertex(to))
-        {
-            return false;
-        }
-        bool t = false;
-        for (auto& it : adj[from])
-        {
-            if (it.target == to)
-            {
-                adj[from].erase(std::find(adj[from].begin(), adj[from].end(), it));
-                t = true;
-            }
-        }
-        return t;
+        if (!has_vertex(from) || !has_vertex(to)) return false;
+        auto& edges = adj[from];
+        auto it = std::remove_if(edges.begin(), edges.end(),
+            [&to](const Edge& e) { return e.target == to; });
+        if (it == edges.end()) return false;
+        edges.erase(it, edges.end());
+        return true;
     }
 
     bool remove_edge(const Edge& e)
     {
         bool t = false;
-        for (auto& vert : adj)
-        {
-            for (auto& it : vert.second)
-            {
-                if (*it == e)
-                {
-                    vert.second.erase(std::find(vert.second.begin(), vert.second.end(), it));
-                    t = true;
-                }
+        for (auto& [u, edges] : adj) {
+            auto it = std::find(edges.begin(), edges.end(), e);
+            if (it != edges.end()) {
+                edges.erase(it);
+                t = true;
             }
         }
         return t;
@@ -134,7 +124,7 @@ public:
         {
             for (auto& it : vert.second)
             {
-                if (*it == e)
+                if (it == e)
                 {
                     return true;
                 }
@@ -181,26 +171,58 @@ public:
         }
         return result;
     }
-    bool is_connected() const
-    {
-        if (adj.size() < 2)
-        {
-            return true;
-        }
-        for (auto& vert : adj)
-        {
-            std::vector<Vertex> visited = walk(vert.first, [](const Vertex& v) { });
-            if (visited.size() != adj.size())
-            {
-                return false;
+    //bool is_connected() const
+    //{
+    //    if (adj.size() < 2)
+    //    {
+    //        return true;
+    //    }
+    //    for (auto& vert : adj)
+    //    {
+    //        std::vector<Vertex> visited = walk(vert.first, [](const Vertex& v) { });
+    //        if (visited.size() != adj.size())
+    //        {
+    //            return false;
+    //        }
+    //    }
+    //    return true;
+    //}
+
+    bool is_connected() const {
+        if (order() <= 1) return true;
+
+        Vertex start = adj.begin()->first;
+
+        auto reachable = walk(start, [](const Vertex&) {});
+        if (reachable.size() != order()) return false;
+        std::unordered_map<Vertex, std::vector<Edge>> transposed;
+        for (const auto& [u, edges] : adj) {
+            for (const Edge& e : edges) {
+                transposed[e.target].push_back(Edge(u, e.weight));
             }
         }
-        return true;
+
+        std::unordered_map<Vertex, bool> visited;
+        std::queue<Vertex> q;
+        visited[start] = true;
+        q.push(start);
+        while (!q.empty()) {
+            Vertex u = q.front(); q.pop();
+            for (const Edge& e : transposed[u]) {
+                if (!visited[e.target]) {
+                    visited[e.target] = true;
+                    q.push(e.target);
+                }
+            }
+        }
+        return visited.size() == order();
     }
 
     std::vector<Vertex> walk(const Vertex& start_vertex,
         std::function<void(const Vertex&)> action) const
     {
+        if (!has_vertex(start_vertex)) return {};
+
         std::unordered_map<Vertex, bool> visited;
         std::queue<Vertex> q;
         std::vector<Vertex> res;
@@ -220,8 +242,8 @@ public:
             {
                 if (visited[it.target] == false)
                 {
-                    q.push(it.target);
                     visited[it.target] = true;
+                    q.push(it.target);
                 }
             }
         }
